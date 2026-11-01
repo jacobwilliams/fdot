@@ -1,0 +1,65 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+
+  # the unit tests and random graphs, on every platform, from the same pixi environment (gfortran,
+  # fpm) used locally
+  Test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v7.0.1
+
+    # installs pixi and creates the environment from pixi.toml/pixi.lock
+    - name: Setup pixi environment
+      uses: prefix-dev/setup-pixi@v0.10.2
+      with:
+        pixi-version: v0.80.0
+        locked: true   # fail if pixi.lock is out of date with pixi.toml
+        cache: true
+        cache-write: ${{ github.ref == 'refs/heads/master' }}
+
+    - name: Run tests
+      run: pixi run test
+
+    - name: Run in parallel
+      run: pixi run test-threads
+
+    # random graphs with the runtime checks of the debug build, with a checksum of the output
+    - name: Run random graphs
+      shell: bash
+      run: pixi run robust | tee robust.txt
+
+    - name: Keep the checksum
+      uses: actions/upload-artifact@v4
+      with:
+        name: checksum-${{ matrix.os }}
+        path: robust.txt
+
+    - name: Check the code
+      if: runner.os == 'Linux'
+      run: |
+        pixi run check-standard
+        pixi run check-threads
+
+  # the same input must give the same output on every platform
+  Compare:
+    needs: Test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get the checksums
+      uses: actions/download-artifact@v4
+
+    - name: Compare the checksums
+      run: |
+        grep -h checksum checksum-*/robust.txt | tee all.txt
+        test "$(sort -u all.txt | wc -l)" -eq 1

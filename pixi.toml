@@ -1,0 +1,24 @@
+[workspace]
+authors = ["Jacob Williams <jacobwilliams@users.noreply.github.com>"]
+channels = ["conda-forge"]
+name = "fdot"
+platforms = ["osx-arm64", "linux-64", "linux-aarch64", "osx-64", "win-64"]
+version = "0.1.0"
+
+[tasks]
+build = { cmd = "fpm build --profile release", description = "Build fdot" }
+test = { cmd = "fpm test", description = "Run the unit tests, with the runtime checks of the debug build" }
+test-threads = { cmd = "fpm test stress_parallel --profile release --flag -fopenmp --link-flag -fopenmp", description = "Lay out graphs in parallel, with 1, 4 and 10 threads" }
+check-standard = { cmd = "python tools/check_standard.py", depends-on = ["build"], description = "Check that the code is standard Fortran" }
+check-threads = { cmd = "python tools/check_threads.py", depends-on = ["build"], description = "Check that the library avoids what is not safe in threads" }
+corpus = { cmd = "python tools/corpus.py", description = "Export the graphs of fdoc as a corpus: pixi run corpus FDOC_BINARY" }
+compare = { cmd = "python tools/compare.py", depends-on = ["build"], description = "Compare fdot with dot on the corpus" }
+register-dot = { cmd = "dot -c", description = "Register the plugins of dot, as pixi does not run the install script of graphviz" }
+robust = { cmd = "python tools/robust.py", description = "Lay out random graphs with the runtime checks of the debug build" }
+
+[dependencies]
+gfortran = "16.*"
+fpm = ">=0.13.0,<0.14"
+python = "3.13.*"
+graphviz = ">=14.1.2,<15"
+numpy = "*"

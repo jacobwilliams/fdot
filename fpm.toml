@@ -1,0 +1,37 @@
+name = "fdot"
+version = "0.1.0"
+license = "EPL-2.0"
+author = "Jacob Williams"
+maintainer = "Jacob Williams"
+description = "The graph layout of Graphviz dot, in modern Fortran"
+keywords = ["graph", "layout", "graphviz", "svg"]
+
+[build]
+auto-executables = false
+auto-tests = true
+auto-examples = true
+module-naming = false
+
+[[executable]]
+name = "fdot-layout"
+source-dir = "app"
+main = "main.f90"
+
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
+[dev-dependencies]
+test-drive = { git = "https://github.com/fortran-lang/test-drive", tag = "v0.5.0" }
+
+[extra.fdoc]
+project = "fdot"
+summary = "The graph layout of Graphviz dot, in modern Fortran"
+project_github = "https://github.com/jacobwilliams/fdot"
+author = "Jacob Williams"
+github = "https://github.com/jacobwilliams"
+license = "EPL-2.0"
+src_dir = ["./src"]
+output_dir = "./doc"
+front_page_file = "README.md"
