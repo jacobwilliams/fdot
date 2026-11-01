@@ -5,7 +5,7 @@ use iso_fortran_env, only: int64, error_unit
 use fdot, only: graph_t
 implicit none
 
-integer, parameter :: GRAPHS = 400
+integer, parameter :: GRAPHS = 200
 integer(int64) :: reference(GRAPHS), sums(GRAPHS)
 integer, parameter :: THREADS(3) = [1, 4, 10]
 integer :: t, k

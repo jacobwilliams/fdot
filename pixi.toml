@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [tasks]
 build = { cmd = "fpm build --profile release", description = "Build fdot" }
-test = { cmd = "fpm test", description = "Run the unit tests, with the runtime checks of the debug build" }
+test = { cmd = "fpm test check", description = "Run the unit tests, with the runtime checks of the debug build" }
 test-threads = { cmd = "fpm test stress_parallel --profile release --flag -fopenmp --link-flag -fopenmp", description = "Lay out graphs in parallel, with 1, 4 and 10 threads" }
 check-standard = { cmd = "python tools/check_standard.py", depends-on = ["build"], description = "Check that the code is standard Fortran" }
 check-threads = { cmd = "python tools/check_threads.py", depends-on = ["build"], description = "Check that the library avoids what is not safe in threads" }

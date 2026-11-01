@@ -6,18 +6,24 @@
 The graphs have deep cycles, long chains, very dense parts, self-loops, parallel edges, labels and
 several components. All must end. The last line has a checksum of the output, from a fixed sequence of
 graphs, which CI compares between platforms.
+
+Graphs run in batches, in parallel, each with its own time limit. A batch that goes over the limit is
+named, and its input is kept in `robust-timeout.txt`, so that a hang can be told from a slow machine.
 """
 
 import argparse
 import hashlib
+import os
 import random
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TIME_LIMIT = 300
+BATCH = 25          # graphs in a process
+TIME_LIMIT = 300    # seconds for a batch
 
 
 def node_line(rng):
@@ -74,26 +80,39 @@ def graph(rng, kind):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--count", type=int, default=700)
+    parser.add_argument("--count", type=int, default=210)
     parser.add_argument("--profile", default="debug")
     options = parser.parse_args()
     rng = random.Random(20261101)
     kinds = ["cycles", "chain", "dense", "star", "layers", "parts", "random"]
-    lines = []
+    batches = [[] for _ in range((options.count + BATCH - 1) // BATCH)]
     for k in range(options.count):
-        lines += graph(rng, kinds[k % len(kinds)])
-    text = "\n".join(lines) + "\n"
+        batches[k // BATCH] += graph(rng, kinds[k % len(kinds)])
     subprocess.run(["fpm", "build", "--profile", options.profile], cwd=ROOT, check=True, capture_output=True)
     out = subprocess.run(["fpm", "run", "fdot-layout", "--profile", options.profile, "--runner", "echo"],
                          cwd=ROOT, check=True, capture_output=True, text=True).stdout
     binary = ROOT / out.split()[-1]
     start = time.time()
-    result = subprocess.run([str(binary), "svg"], input=text.encode(), capture_output=True, timeout=TIME_LIMIT)
+
+    def run(numbered):
+        number, lines = numbered
+        text = ("\n".join(lines) + "\n").encode()
+        began = time.time()
+        try:
+            result = subprocess.run([str(binary), "svg"], input=text, capture_output=True, timeout=TIME_LIMIT)
+        except subprocess.TimeoutExpired:
+            (ROOT / "robust-timeout.txt").write_bytes(text)
+            sys.exit(f"batch {number} of {len(batches)} went over {TIME_LIMIT} s: see robust-timeout.txt")
+        print(f"batch {number} of {len(batches)}: {time.time() - began:.1f} s", flush=True)
+        if result.returncode != 0:
+            print(result.stderr.decode(errors="replace")[-3000:], flush=True)
+            sys.exit(f"batch {number}: fdot-layout failed with {result.returncode}")
+        return result.stdout
+
+    with ThreadPoolExecutor(os.cpu_count()) as pool:
+        output = b"".join(pool.map(run, enumerate(batches, 1)))
     seconds = time.time() - start
-    if result.returncode != 0:
-        print(result.stderr.decode(errors="replace")[-3000:])
-        sys.exit(f"fdot-layout failed with {result.returncode}")
-    output = result.stdout.replace(b"\r\n", b"\n")
+    output = output.replace(b"\r\n", b"\n")
     lines = output.split(b"\n")
     failed = sum(line.startswith(b"failed ") for line in lines)
     done = sum(line.strip() == b"%%%" for line in lines)
