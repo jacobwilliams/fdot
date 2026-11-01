@@ -61,5 +61,5 @@ jobs:
 
     - name: Compare the checksums
       run: |
-        grep -h checksum checksum-*/robust.txt | tee all.txt
+        grep -h checksum checksum-*/robust.txt | tr -d '\r' | tee all.txt
         test "$(sort -u all.txt | wc -l)" -eq 1
