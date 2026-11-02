@@ -10,7 +10,7 @@ implicit none
 private
 
 public :: buffer_t, add, add_int, add_tenths, add_xml, take
-public :: svg_begin, svg_end, svg_box, svg_text, svg_curve, svg_arrow
+public :: svg_begin, svg_end, svg_box, svg_left_box, svg_text, svg_curve, svg_arrow
 
 type :: buffer_t
     !! Text that grows.
@@ -170,6 +170,46 @@ pure subroutine svg_box(b, x, y, width, height, fill, outline, pen)
     call add_tenths(b, height)
     call add(b, '"/>')
 end subroutine svg_box
+
+!> Add the left part of a box, rounded on the left only, to go over a whole box.
+pure subroutine svg_left_box(b, x, y, width, height, fill)
+    type(buffer_t), intent(inout) :: b      !! the buffer
+    real(wp), intent(in) :: x               !! the left side
+    real(wp), intent(in) :: y               !! the top side, downwards
+    real(wp), intent(in) :: width           !! the width
+    real(wp), intent(in) :: height          !! the height
+    character(len=*), intent(in) :: fill    !! the fill
+    real(wp), parameter :: RADIUS = 7.2_wp
+
+    call add(b, '<path fill="')
+    call add_xml(b, fill)
+    call add(b, '" stroke="none" d="M')
+    call add_pair(b, x + RADIUS, y)
+    call add(b, 'H')
+    call add_tenths(b, x + width)
+    call add(b, 'V')
+    call add_tenths(b, y + height)
+    call add(b, 'H')
+    call add_tenths(b, x + RADIUS)
+    call add(b, 'A7.2,7.2 0 0 1 ')
+    call add_pair(b, x, y + height - RADIUS)
+    call add(b, 'V')
+    call add_tenths(b, y + RADIUS)
+    call add(b, 'A7.2,7.2 0 0 1 ')
+    call add_pair(b, x + RADIUS, y)
+    call add(b, 'Z"/>')
+end subroutine svg_left_box
+
+!> Add a point.
+pure subroutine add_pair(b, x, y)
+    type(buffer_t), intent(inout) :: b  !! the buffer
+    real(wp), intent(in) :: x           !! across
+    real(wp), intent(in) :: y           !! down
+
+    call add_tenths(b, x)
+    call add(b, ',')
+    call add_tenths(b, y)
+end subroutine add_pair
 
 !> Add text. An empty `fill` means the colour of the group around it.
 pure subroutine svg_text(b, x, y, text, font_size, fill)

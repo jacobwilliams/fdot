@@ -40,6 +40,7 @@ call g%write_svg(svg)
 - `layout` and `write_svg` are separate, so that a caller can read the result with `node_position`,
   `edge_curve` and `edge_label_position`, and draw it another way.
 - Colours and links are passed through as text.
+- A node can have two joined parts, each with its own colour and link, for something that belongs to something else: `call g%add_node('emit', c, fill='#1d7a55', link='emit.html', owner='QSignal', owner_fill='#a15c00', owner_link='QSignal.html')`.
 - `stat` is `FDOT_OK` or says what went wrong.
 - `write_dot` writes the graph in the DOT language, for debugging.
 - `node_style_t` and `edge_style_t` change sizes. The defaults are what fdoc draws.

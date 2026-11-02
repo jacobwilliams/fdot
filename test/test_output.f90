@@ -16,8 +16,53 @@ subroutine collect_output(testsuite)
 
     testsuite = [new_unittest("numbers", test_numbers), new_unittest("svg", test_svg), &
                  new_unittest("dot", test_dot), new_unittest("repeatable", test_repeatable), &
-                 new_unittest("styles", test_styles)]
+                 new_unittest("styles", test_styles), &
+                 new_unittest("nodes of two parts", test_two_parts)]
 end subroutine collect_output
+
+!> Checks: the parts of a node each have a colour and a link, and the name of the node is not repeated.
+subroutine test_two_parts(error)
+    type(error_type), allocatable, intent(out) :: error !! the result
+    type(graph_t) :: g, plain
+    character(len=:), allocatable :: svg, text
+    real(wp) :: x, y, width, height, plain_width
+    integer :: a, b, c, stat
+
+    call g%initialize()
+    call g%add_node('emit', a, fill='#1d7a55', link='emit.html', outline='#f0a868', &
+                    owner='QSignal', owner_fill='#a15c00', owner_link='QSignal.html')
+    call g%add_node('other', b)
+    call g%add_edge(a, b)
+    call g%layout(stat)
+    call check(error, stat, 0)
+    if (allocated(error)) return
+    call g%write_svg(svg)
+    call contains_text(svg, '<a href="emit.html"', error)
+    if (allocated(error)) return
+    call contains_text(svg, '>emit</text>', error)
+    if (allocated(error)) return
+    call contains_text(svg, '<a href="QSignal.html"', error)
+    if (allocated(error)) return
+    call contains_text(svg, '<path fill="#a15c00" stroke="none" d="M', error)
+    if (allocated(error)) return
+    call contains_text(svg, '>QSignal</text>', error)
+    if (allocated(error)) return
+    call contains_text(svg, '<rect fill="none" stroke="#f0a868"', error)
+    if (allocated(error)) return
+    call check(error, index(svg, '%') == 0, 'no separator is drawn')
+    if (allocated(error)) return
+    call g%write_dot(text)
+    call contains_text(text, 'label="QSignal%emit"', error)
+    if (allocated(error)) return
+
+    ! the box is as wide as a plain one with the same text and a margin more
+    call plain%initialize()
+    call plain%add_node('QSignalemit', c)
+    call plain%layout(stat)
+    call plain%node_position(c, x, y, plain_width, height)
+    call g%node_position(a, x, y, width, height)
+    call check(error, width > plain_width, 'room for the margins of both parts')
+end subroutine test_two_parts
 
 !> The text of a number.
 subroutine tenths(value, expected, error)

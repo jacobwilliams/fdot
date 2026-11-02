@@ -29,7 +29,7 @@ integer, parameter, public :: FDOT_FLAT_EDGE = 3        !! an edge joins nodes o
 integer, parameter, public :: FDOT_NO_ROUTE = 4         !! no route was found for an edge
 
 real(wp), parameter :: PAD = 4.0_wp                     !! points around a drawing
-real(wp), parameter :: BASELINE = 0.36_wp               !! where the middle of text is above its baseline, in font sizes
+real(wp), parameter :: BASELINE_SHARE = 0.36_wp               !! where the middle of text is above its baseline, in font sizes
 
 type :: node_style_t
     !! How nodes look, by default as fdoc draws them.
@@ -51,6 +51,7 @@ end type edge_style_t
 type :: node_data_t
     !! What was given for a node.
     character(len=:), allocatable :: name, fill, link, outline
+    character(len=:), allocatable :: owner, owner_fill, owner_link  !! the left part of a node of two parts
 end type node_data_t
 
 type :: edge_data_t
@@ -117,14 +118,19 @@ pure subroutine initialize(this, direction, concentrate, node_style, edge_style)
     allocate (this%nodes(16), this%edges(16))
 end subroutine initialize
 
-!> Add a node, and return its number. The colours and the link are passed through as text.
-pure subroutine add_node(this, name, id, fill, link, outline)
+!> Add a node, and return its number. The colours and the links are passed through as text. With
+!> `owner`, the node has two parts joined side by side: the owner on the left, with a colour and a link
+!> of its own, and the name on the right. This is for something that belongs to something else.
+pure subroutine add_node(this, name, id, fill, link, outline, owner, owner_fill, owner_link)
     class(graph_t), intent(inout) :: this           !! the graph
     character(len=*), intent(in) :: name            !! the text of the node
     integer, intent(out) :: id                      !! its number
     character(len=*), intent(in), optional :: fill  !! the fill colour
     character(len=*), intent(in), optional :: link  !! where it links to
     character(len=*), intent(in), optional :: outline   !! the colour of an outline
+    character(len=*), intent(in), optional :: owner     !! the text of the left part
+    character(len=*), intent(in), optional :: owner_fill    !! the fill colour of the left part
+    character(len=*), intent(in), optional :: owner_link    !! where the left part links to
     type(node_data_t), allocatable :: bigger(:)
     integer :: k
 
@@ -136,6 +142,9 @@ pure subroutine add_node(this, name, id, fill, link, outline)
             call move_alloc(this%nodes(k)%fill, bigger(k)%fill)
             call move_alloc(this%nodes(k)%link, bigger(k)%link)
             call move_alloc(this%nodes(k)%outline, bigger(k)%outline)
+            call move_alloc(this%nodes(k)%owner, bigger(k)%owner)
+            call move_alloc(this%nodes(k)%owner_fill, bigger(k)%owner_fill)
+            call move_alloc(this%nodes(k)%owner_link, bigger(k)%owner_link)
         end do
         call move_alloc(bigger, this%nodes)
     end if
@@ -150,6 +159,12 @@ pure subroutine add_node(this, name, id, fill, link, outline)
         if (present(link)) n%link = link
         n%outline = ''
         if (present(outline)) n%outline = outline
+        n%owner = ''
+        if (present(owner)) n%owner = owner
+        n%owner_fill = '#646d7e'
+        if (present(owner_fill)) n%owner_fill = owner_fill
+        n%owner_link = ''
+        if (present(owner_link)) n%owner_link = owner_link
     end associate
 end subroutine add_node
 
@@ -271,15 +286,16 @@ end subroutine layout
 !> Make the nodes of the working graph, with their sizes.
 pure subroutine set_up_nodes(this)
     class(graph_t), intent(inout) :: this   !! the graph
-    real(wp) :: w, h, pen
+    real(wp) :: w, h, pen, text_w
     integer :: k, v
 
     allocate (this%c%out_w(this%nn), this%c%out_h(this%nn))
     do k = 1, this%nn
         call new_node(this%c, v)
         associate (n => this%c%nd(v), s => this%node_style)
-            call node_size(text_width(this%nodes(k)%name, s%font_size), text_height(s%font_size), &
-                           s%margin_x, s%margin_y, s%height, w, h)
+            text_w = text_width(this%nodes(k)%name, s%font_size)
+            if (len(this%nodes(k)%owner) > 0) text_w = text_w + owner_width(this, k)
+            call node_size(text_w, text_height(s%font_size), s%margin_x, s%margin_y, s%height, w, h)
             ! ranks go across the page, so the layout works with the box on its side
             n%lw = h/2
             n%rw = h/2
@@ -291,6 +307,14 @@ pure subroutine set_up_nodes(this)
     end do
     this%c%nn = this%nn
 end subroutine set_up_nodes
+
+!> The width of the left part of node `k`.
+pure real(wp) function owner_width(this, k)
+    class(graph_t), intent(in) :: this  !! the graph
+    integer, intent(in) :: k            !! the node
+
+    owner_width = text_width(this%nodes(k)%owner, this%node_style%font_size) + 2*this%node_style%margin_x
+end function owner_width
 
 !> Make the edges of the working graph, with the sizes of their labels.
 pure subroutine set_up_edges(this)
@@ -351,19 +375,69 @@ pure subroutine draw_node(this, v, b)
 
     call node_position(this, v, x, y, w, h)
     associate (n => this%nodes(v))
-        if (len(n%link) > 0) then
+        if (len(n%owner) > 0) then
+            call draw_two_parts(this, v, x, y, w, h, b)
+        else if (len(n%link) > 0) then
             call add(b, '<a href="')
             call add_xml(b, n%link)
             call add(b, '" fill="white" stroke="none">')
             call svg_box_in_link(b, x - w/2, -y - h/2, w, h, n%fill, n%outline, this%node_style%pen_width)
-            call svg_text(b, x, -y + BASELINE*this%node_style%font_size, n%name, 0.0_wp, '')
+            call svg_text(b, x, -y + BASELINE_SHARE*this%node_style%font_size, n%name, 0.0_wp, '')
             call add(b, '</a>')
         else
             call svg_box(b, x - w/2, -y - h/2, w, h, n%fill, n%outline, this%node_style%pen_width)
-            call svg_text(b, x, -y + BASELINE*this%node_style%font_size, n%name, 0.0_wp, 'white')
+            call svg_text(b, x, -y + BASELINE_SHARE*this%node_style%font_size, n%name, 0.0_wp, 'white')
         end if
     end associate
 end subroutine draw_node
+
+!> Draw a node of two parts: the whole box in the colour of the right part, the left part over it, and
+!> last the outline, so that the left part does not cover it.
+pure subroutine draw_two_parts(this, v, x, y, w, h, b)
+    class(graph_t), intent(in) :: this  !! the graph
+    integer, intent(in) :: v            !! the node
+    real(wp), intent(in) :: x           !! the centre
+    real(wp), intent(in) :: y           !! the centre
+    real(wp), intent(in) :: w           !! the width
+    real(wp), intent(in) :: h           !! the height
+    type(buffer_t), intent(inout) :: b  !! the drawing
+    real(wp) :: left, top, split, baseline
+
+    left = x - w/2
+    top = -y - h/2
+    split = owner_width(this, v)
+    baseline = -y + BASELINE_SHARE*this%node_style%font_size
+    associate (n => this%nodes(v))
+        call open_link(n%link, b)
+        call svg_box(b, left, top, w, h, n%fill, '', this%node_style%pen_width)
+        call svg_text(b, left + (split + w)/2, baseline, n%name, 0.0_wp, 'white')
+        call close_link(n%link, b)
+        call open_link(n%owner_link, b)
+        call svg_left_box(b, left, top, split, h, n%owner_fill)
+        call svg_text(b, left + split/2, baseline, n%owner, 0.0_wp, 'white')
+        call close_link(n%owner_link, b)
+        if (len(n%outline) > 0) call svg_box(b, left, top, w, h, 'none', n%outline, this%node_style%pen_width)
+    end associate
+end subroutine draw_two_parts
+
+!> Start a link, if there is one.
+pure subroutine open_link(link, b)
+    character(len=*), intent(in) :: link    !! where it goes
+    type(buffer_t), intent(inout) :: b      !! the drawing
+
+    if (len(link) == 0) return
+    call add(b, '<a href="')
+    call add_xml(b, link)
+    call add(b, '" fill="white" stroke="none">')
+end subroutine open_link
+
+!> End a link, if there is one.
+pure subroutine close_link(link, b)
+    character(len=*), intent(in) :: link    !! where it goes
+    type(buffer_t), intent(inout) :: b      !! the drawing
+
+    if (len(link) > 0) call add(b, '</a>')
+end subroutine close_link
 
 !> Draw the box of a node inside a link, which has `stroke="none"` already.
 pure subroutine svg_box_in_link(b, x, y, width, height, fill, outline, pen)
@@ -412,7 +486,7 @@ pure subroutine draw_edge(this, e, b)
         end associate
     end do
     if (this%c%labelled(e)) then
-        call svg_text(b, this%c%label_pos(e)%x, -this%c%label_pos(e)%y + BASELINE*this%edge_style%font_size, &
+        call svg_text(b, this%c%label_pos(e)%x, -this%c%label_pos(e)%y + BASELINE_SHARE*this%edge_style%font_size, &
                       this%edges(e)%label, this%edge_style%font_size, this%edge_style%label_colour)
     end if
 end subroutine draw_edge
@@ -437,6 +511,7 @@ pure subroutine write_dot(this, text)
         call add(b, 'n')
         call add_int(b, int(k, int64))
         call add(b, ' [label="')
+        if (len(this%nodes(k)%owner) > 0) call add_dot_string(b, this%nodes(k)%owner//'%')
         call add_dot_string(b, this%nodes(k)%name)
         call add(b, '", fillcolor="'//this%nodes(k)%fill//'"')
         if (len(this%nodes(k)%outline) > 0) then
