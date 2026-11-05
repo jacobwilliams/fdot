@@ -15,7 +15,11 @@ integer, parameter :: LABEL_SEP = 5         !! points between nodes on the extra
 
 type :: aux_t
     !! The auxiliary graph. Nodes above 0 are nodes of the layout, and below 0 are slack nodes.
-    type(ilist_t) :: tail, head, len, weight, slack_rank
+    type(ilist_t) :: tail           !! where each edge starts
+    type(ilist_t) :: head           !! where each edge ends
+    type(ilist_t) :: len            !! the smallest length of each edge
+    type(ilist_t) :: weight         !! the weight of each edge
+    type(ilist_t) :: slack_rank     !! the first position of each slack node
 end type aux_t
 
 contains

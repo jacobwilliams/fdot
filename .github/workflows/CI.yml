@@ -48,6 +48,7 @@ jobs:
     - name: Check the code
       if: runner.os == 'Linux'
       run: |
+        pixi run check-docs
         pixi run check-standard
         pixi run check-threads
 

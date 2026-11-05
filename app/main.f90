@@ -98,7 +98,7 @@ end subroutine read_line
 subroutine split(line, fields)
     character(len=*), intent(in) :: line                    !! the line
     character(len=:), allocatable, intent(out) :: fields(:) !! the fields
-    integer, parameter :: MOST = 6
+    integer, parameter :: MOST = 6         !! the most fields a line has
     integer :: k, from, at
 
     allocate (character(len=max(1, len(line))) :: fields(MOST))

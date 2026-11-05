@@ -13,7 +13,7 @@ public :: new_node, new_edge, fast_edge, delete_fast_edge, find_fast_edge
 public :: new_virtual_edge, virtual_edge, virtual_node, merge_oneway, merge_chain, other_edge
 public :: decompose, round, main_edge
 
-integer, parameter :: wp = real64
+integer, parameter :: wp = real64   !! the kind of reals
 
 integer, parameter, public :: NORMAL = 0        !! a node or edge of the drawing
 integer, parameter, public :: VIRTUAL = 1       !! a node or edge added for the layout

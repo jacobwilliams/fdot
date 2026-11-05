@@ -179,7 +179,7 @@ pure subroutine svg_left_box(b, x, y, width, height, fill)
     real(wp), intent(in) :: width           !! the width
     real(wp), intent(in) :: height          !! the height
     character(len=*), intent(in) :: fill    !! the fill
-    real(wp), parameter :: RADIUS = 7.2_wp
+    real(wp), parameter :: RADIUS = 7.2_wp     !! the radius of the corners
 
     call add(b, '<path fill="')
     call add_xml(b, fill)

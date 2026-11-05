@@ -55,6 +55,7 @@ All tools come from the pixi environment, and fpm builds the code.
 | `pixi run test` | Run the unit tests |
 | `pixi run test-threads` | Lay out graphs with 1, 4 and 10 threads, and compare |
 | `pixi run robust` | Lay out random graphs, with runtime checks |
+| `pixi run check-docs` | Check that every routine, argument, type and component is documented |
 | `pixi run check-standard` | Check that the code is standard Fortran |
 | `pixi run check-threads` | Check for what is not safe in threads, and for I/O and C |
 | `pixi run register-dot` | Register the plugins of `dot`, once, before the next two |

@@ -30,13 +30,28 @@ type :: ns_t
     integer, allocatable :: out_list(:)     !! the out-edges of the nodes
     integer, allocatable :: in_list(:)      !! the in-edges of the nodes
 
-    integer(int64), allocatable, private :: cutvalue(:)
-    integer, allocatable, private :: tree_index(:), tree_edge(:), tree_out(:), tree_in(:)
-    integer, allocatable, private :: tree_out_size(:), tree_in_size(:)
-    integer, allocatable, private :: par(:), low(:), lim(:), priority(:), subtree(:)
-    integer, allocatable, private :: st_rep(:), st_size(:), st_heap(:), st_par(:), heap(:)
-    integer, allocatable, private :: stack(:, :)
-    integer, private :: tree_count = 0, search_index = 0, search_size = SEARCHSIZE, heap_size = 0
+    integer(int64), allocatable, private :: cutvalue(:) !! the cut value of each edge of the tree
+    integer, allocatable, private :: tree_index(:)  !! where each edge is in `tree_edge`, or 0
+    integer, allocatable, private :: tree_edge(:)   !! the edges of the tree
+    integer, allocatable, private :: tree_out(:)    !! the out-edges in the tree, in the places of `out_list`
+    integer, allocatable, private :: tree_in(:)     !! the in-edges in the tree, in the places of `in_list`
+    integer, allocatable, private :: tree_out_size(:)   !! how many out-edges of each node are in the tree
+    integer, allocatable, private :: tree_in_size(:)    !! how many in-edges of each node are in the tree
+    integer, allocatable, private :: par(:)         !! the edge to the parent of each node in the tree
+    integer, allocatable, private :: low(:)         !! the lowest search index below each node
+    integer, allocatable, private :: lim(:)         !! the search index of each node
+    integer, allocatable, private :: priority(:)    !! the in-edges of each node not yet ranked, in `init_rank`
+    integer, allocatable, private :: subtree(:)     !! the tight subtree of each node, while the tree is built
+    integer, allocatable, private :: st_rep(:)      !! a node of each subtree
+    integer, allocatable, private :: st_size(:)     !! how many nodes each subtree has
+    integer, allocatable, private :: st_heap(:)     !! where each subtree is in `heap`, or -1
+    integer, allocatable, private :: st_par(:)      !! the parent of each subtree in the sets of subtrees
+    integer, allocatable, private :: heap(:)        !! the subtrees, smallest first, from 0
+    integer, allocatable, private :: stack(:, :)    !! the explicit stack of the searches
+    integer, private :: tree_count = 0              !! how many edges the tree has
+    integer, private :: search_index = 0            !! where `leave_edge` goes on looking
+    integer, private :: search_size = SEARCHSIZE    !! how many negative edges to look at
+    integer, private :: heap_size = 0               !! how many subtrees are in `heap`
 end type ns_t
 
 contains

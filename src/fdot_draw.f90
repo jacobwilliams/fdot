@@ -40,7 +40,7 @@ pure subroutine arrow_polygon(p, towards, arrow_size, corners)
     type(point_t), intent(in) :: towards    !! the point it points away from
     real(wp), intent(in) :: arrow_size      !! its size
     type(point_t), intent(out) :: corners(3)    !! the corners
-    real(wp), parameter :: ARROW_WIDTH = 0.35_wp
+    real(wp), parameter :: ARROW_WIDTH = 0.35_wp   !! half the width of an arrowhead, as a part of its length
     real(wp) :: ux, uy, s, vx, vy, len, tip, dx, dy
 
     ux = towards%x - p%x

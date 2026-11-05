@@ -8,9 +8,12 @@ private
 
 public :: plist_t, add_point, shortest_path, route_spline
 
-real(wp), parameter :: EPSILON1 = 1.0e-3_wp, EPSILON2 = 1.0e-6_wp
-real(wp), parameter :: PI = 3.14159265358979323846_wp
-integer, parameter :: ISCCW = 1, ISCW = 2, ISON = 3
+real(wp), parameter :: EPSILON1 = 1.0e-3_wp   !! how short a path can be, and how near a barrier a crossing can be
+real(wp), parameter :: EPSILON2 = 1.0e-6_wp   !! how near the ends of a curve a crossing is ignored
+real(wp), parameter :: PI = acos(-1.0_wp)     !! pi
+integer, parameter :: ISCCW = 1     !! three points turn counterclockwise
+integer, parameter :: ISCW = 2      !! three points turn clockwise
+integer, parameter :: ISON = 3      !! three points are on a line
 
 type :: plist_t
     !! A list of points that grows.

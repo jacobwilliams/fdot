@@ -7,12 +7,11 @@ private
 
 public :: text_width, text_height
 
-integer, parameter :: wp = real64
+integer, parameter :: wp = real64                   !! the kind of reals
 integer, parameter :: UNITS_PER_EM = 2048           !! the units of the table
 real(wp), parameter :: LINESPACING = 1.20_wp        !! the height of a line, as a part of the font size
 
-!> The width of each ASCII character, or -1 for those with none.
-integer, parameter :: WIDTHS(0:127) = [ &
+integer, parameter :: WIDTHS(0:127) = [ &          !! the width of each ASCII character, or -1 for none
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, &
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1, &
           -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,  569,  569,  727, 1139, &

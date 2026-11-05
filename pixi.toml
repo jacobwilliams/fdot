@@ -9,6 +9,7 @@ version = "0.2.0"
 build = { cmd = "fpm build --profile release", description = "Build fdot" }
 test = { cmd = "fpm test check", description = "Run the unit tests, with the runtime checks of the debug build" }
 test-threads = { cmd = "fpm test stress_parallel --profile release --flag -fopenmp --link-flag -fopenmp", description = "Lay out graphs in parallel, with 1, 4 and 10 threads" }
+check-docs = { cmd = "python tools/check_docs.py", description = "Check that every routine, argument, type and component is documented" }
 check-standard = { cmd = "python tools/check_standard.py", depends-on = ["build"], description = "Check that the code is standard Fortran" }
 check-threads = { cmd = "python tools/check_threads.py", depends-on = ["build"], description = "Check that the library avoids what is not safe in threads" }
 corpus = { cmd = "python tools/corpus.py", description = "Export the graphs of fdoc as a corpus: pixi run corpus FDOC_BINARY" }

@@ -50,29 +50,37 @@ end type edge_style_t
 
 type :: node_data_t
     !! What was given for a node.
-    character(len=:), allocatable :: name, fill, link, outline
-    character(len=:), allocatable :: owner, owner_fill, owner_link  !! the left part of a node of two parts
+    character(len=:), allocatable :: name           !! the text
+    character(len=:), allocatable :: fill           !! the fill colour
+    character(len=:), allocatable :: link           !! where it links to, or empty
+    character(len=:), allocatable :: outline        !! the colour of its outline, or empty
+    character(len=:), allocatable :: owner          !! the text of the left part of a node of two parts, or empty
+    character(len=:), allocatable :: owner_fill     !! the fill colour of the left part
+    character(len=:), allocatable :: owner_link     !! where the left part links to, or empty
 end type node_data_t
 
 type :: edge_data_t
     !! What was given for an edge.
-    integer :: from = 0, to = 0
-    logical :: dashed = .false.
-    character(len=:), allocatable :: label, colour
+    integer :: from = 0                             !! where it starts
+    integer :: to = 0                               !! where it ends
+    logical :: dashed = .false.                     !! whether it is dashed
+    character(len=:), allocatable :: label          !! its label, or empty
+    character(len=:), allocatable :: colour         !! its colour
 end type edge_data_t
 
 type :: graph_t
     !! A graph, and its layout.
     private
-    integer :: direction = RANK_LR
-    logical :: concentrate = .false.
-    logical :: done = .false.
-    type(node_style_t) :: node_style
-    type(edge_style_t) :: edge_style
-    integer :: nn = 0, ne = 0
-    type(node_data_t), allocatable :: nodes(:)
-    type(edge_data_t), allocatable :: edges(:)
-    type(core_t) :: c
+    integer :: direction = RANK_LR                  !! `RANK_LR` or `RANK_RL`
+    logical :: concentrate = .false.                !! whether to merge edges that run together
+    logical :: done = .false.                       !! whether there is a layout of the graph as it is
+    type(node_style_t) :: node_style                !! how nodes look
+    type(edge_style_t) :: edge_style                !! how edges look
+    integer :: nn = 0                               !! how many nodes there are
+    integer :: ne = 0                               !! how many edges there are
+    type(node_data_t), allocatable :: nodes(:)      !! what was given for each node
+    type(edge_data_t), allocatable :: edges(:)      !! what was given for each edge
+    type(core_t) :: c                               !! the state of the layout
 contains
     private
     procedure, public :: initialize         !! start a new graph
@@ -495,7 +503,7 @@ end subroutine draw_edge
 pure subroutine write_dot(this, text)
     class(graph_t), intent(in) :: this                  !! the graph
     character(len=:), allocatable, intent(out) :: text  !! the text
-    character(len=*), parameter :: NL = new_line('a')
+    character(len=*), parameter :: NL = new_line('a')  !! the end of a line
     type(buffer_t) :: b
     integer :: k
 

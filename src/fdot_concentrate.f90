@@ -7,7 +7,8 @@ private
 
 public :: dot_concentrate
 
-integer, parameter :: UP = 0, DOWN = 1
+integer, parameter :: UP = 0       !! merging nodes whose edges go to the same node
+integer, parameter :: DOWN = 1     !! merging nodes whose edges come from the same node
 
 contains
 

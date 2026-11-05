@@ -5,9 +5,9 @@ use iso_fortran_env, only: int64, error_unit
 use fdot, only: graph_t
 implicit none
 
-integer, parameter :: GRAPHS = 200
+integer, parameter :: GRAPHS = 200     !! how many graphs to lay out
 integer(int64) :: reference(GRAPHS), sums(GRAPHS)
-integer, parameter :: THREADS(3) = [1, 4, 10]
+integer, parameter :: THREADS(3) = [1, 4, 10]  !! the numbers of threads to compare
 integer :: t, k
 
 reference = 0

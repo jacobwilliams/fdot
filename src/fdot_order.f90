@@ -201,7 +201,8 @@ end subroutine make_chain
 subroutine virtual_weight(c, e)
     type(core_t), intent(inout) :: c    !! the state
     integer, intent(in) :: e            !! the edge
-    integer, parameter :: TABLE(0:2, 0:2) = reshape([1, 1, 1, 1, 2, 2, 1, 2, 4], [3, 3])
+    integer, parameter :: TABLE(0:2, 0:2) = &  !! the factor of a weight, by the kinds of its ends
+        reshape([1, 1, 1, 1, 2, 2, 1, 2, 4], [3, 3])
 
     c%ed(e)%weight = c%ed(e)%weight*TABLE(endpoint_class(c%nd(c%ed(e)%head)), endpoint_class(c%nd(c%ed(e)%tail)))
 end subroutine virtual_weight

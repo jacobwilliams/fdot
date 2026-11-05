@@ -71,7 +71,7 @@ end subroutine test_disconnected
 !> A long chain does not need a deep stack.
 subroutine test_chain(error)
     type(error_type), allocatable, intent(out) :: error !! the result
-    integer, parameter :: N = 100000
+    integer, parameter :: N = 100000   !! the length of the chain
     type(ns_t) :: s
     integer :: stat, k
 

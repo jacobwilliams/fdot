@@ -9,15 +9,25 @@ private
 
 public :: dot_splines
 
-integer, parameter :: MINW = 16, HALFMINW = 8   !! the smallest width of a box of a path
+integer, parameter :: MINW = 16                 !! the smallest width of a box of a path
+integer, parameter :: HALFMINW = 8              !! half of `MINW`
 integer, parameter :: FUDGE = 4                 !! room beside a node
-integer, parameter :: REGULAREDGE = 1, SELFNPEDGE = 8, EDGETYPEMASK = 15
-integer, parameter :: FWDEDGE = 16, BWDEDGE = 32, MAINGRAPH = 64, AUXGRAPH = 128, GRAPHTYPEMASK = 192
-integer, parameter :: INIT_DELTA = 10, LOOP_TRIES = 15
-real(wp), parameter :: SMALL_GAP = 0.0001_wp
-real(wp), parameter :: MILLIPOINT = 0.001_wp
-real(wp), parameter :: PI = 3.14159265358979323846_wp
-real(wp), parameter :: ARROW_NOMINAL = 10.0_wp, EDGE_PEN = 1.0_wp, HW = 2.0_wp
+integer, parameter :: REGULAREDGE = 1           !! flags of an edge: one between ranks
+integer, parameter :: SELFNPEDGE = 8            !! flags of an edge: a self-loop without ports
+integer, parameter :: EDGETYPEMASK = 15         !! the flags of the kind of an edge
+integer, parameter :: FWDEDGE = 16              !! flags of an edge: it goes down the ranks
+integer, parameter :: BWDEDGE = 32              !! flags of an edge: it goes up the ranks
+integer, parameter :: MAINGRAPH = 64            !! flags of an edge: it is in the graph of ranks
+integer, parameter :: AUXGRAPH = 128            !! flags of an edge: it is routed apart from that graph
+integer, parameter :: GRAPHTYPEMASK = 192       !! the flags of the graph of an edge
+integer, parameter :: INIT_DELTA = 10           !! samples of a curve for each box, to shrink the boxes
+integer, parameter :: LOOP_TRIES = 15           !! how many times to sample more finely
+real(wp), parameter :: SMALL_GAP = 0.0001_wp    !! a tolerance in points, for tests of position
+real(wp), parameter :: MILLIPOINT = 0.001_wp    !! the distance at which two points are the same
+real(wp), parameter :: PI = acos(-1.0_wp)       !! pi
+real(wp), parameter :: ARROW_NOMINAL = 10.0_wp  !! the length of an arrowhead of size 1
+real(wp), parameter :: EDGE_PEN = 1.0_wp        !! the width of the lines of edges
+real(wp), parameter :: HW = 2.0_wp              !! how straight a part of a curve must be to bound it as it is
 
 type :: end_t
     !! An end of a path.
@@ -43,17 +53,17 @@ end type pathend_t
 
 type :: spline_info_t
     !! What is known about the whole drawing.
-    real(wp) :: left_bound = 0
-    real(wp) :: right_bound = 0
-    real(wp) :: splinesep = 0
-    real(wp) :: multisep = 0
-    type(box_t), allocatable :: rank_box(:)
+    real(wp) :: left_bound = 0              !! the left side of the space for paths
+    real(wp) :: right_bound = 0             !! the right side of the space for paths
+    real(wp) :: splinesep = 0               !! the space beside a virtual node
+    real(wp) :: multisep = 0                !! the space between edges drawn together
+    type(box_t), allocatable :: rank_box(:) !! the box of the space below each rank, once it is known
 end type spline_info_t
 
 type :: blist_t
     !! A list of boxes that grows.
-    integer :: n = 0
-    type(box_t), allocatable :: a(:)
+    integer :: n = 0                    !! how many there are
+    type(box_t), allocatable :: a(:)    !! the boxes
 end type blist_t
 
 contains
